@@ -1,0 +1,56 @@
+package org.example.model;
+
+import jakarta.annotation.Nullable;
+import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "users", indexes = {
+        // 🚀 Critical for Python Sync Engine (Incremental Fetch)
+        @Index(name = "idx_users_created", columnList = "created_at"),
+
+        // 🚀 Critical for Login & SMS lookups
+        @Index(name = "idx_users_phone", columnList = "phone_number"),
+
+        // 🚀 Critical for Transaction Routing (Payer/Payee Lookup)
+        @Index(name = "idx_users_vpa", columnList = "vpa")})
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class User {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "user_id")
+    private Long userId;
+
+    @Column(name = "phone_number", unique = true, nullable = false)
+    private String phoneNumber;
+
+    @Column(name = "full_name")
+    private String fullName;
+
+    @Column(name = "vpa", unique = true, nullable = true)
+    @Nullable
+    private String vpa;  // Virtual Payment Address (e.g., "alice@l0")
+
+    @Column(name = "kyc_status")
+    @Enumerated(EnumType.STRING)
+    private Enums.KycStatus kycStatus; // 'PENDING', 'VERIFIED'
+
+    @Column(name = "salt")
+    private String salt;
+
+    @Column(name = "password")
+    private String password;
+
+    @Column(name = "risk_score")
+    private BigDecimal riskScore; // Calculated by ML
+
+    @Column(name = "created_at")
+    private LocalDateTime createdAt = LocalDateTime.now();
+}

@@ -222,6 +222,21 @@ public class CoreBankingController {
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/freeze/{accountNumber}")
+    public Response freezeAccount(@PathVariable String accountNumber) {
+        return transactionService.freezeAccount(accountNumber);
+    }
+
+    @GetMapping("/transactions-graph/{accountNumber}")
+    public ResponseEntity<Response> getTransactionHistory(
+            @PathVariable String accountNumber) {
+        log.info("Transaction history request: account={}",
+                maskAccountNumber(accountNumber));
+
+        Response response = transactionService.getTransactionHistory(accountNumber);
+        return ResponseEntity.ok(response);
+    }
+
     private String maskAccountNumber(String accountNumber) {
         if (accountNumber == null || accountNumber.length() < 4) {
             return "****";

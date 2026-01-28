@@ -6,8 +6,6 @@ import {
   QrCode,
   History,
   Plus,
-  ArrowUpRight,
-  ArrowDownLeft,
   Bell,
   Settings,
   ChevronRight,
@@ -22,7 +20,7 @@ import { Card, TransactionCard, Skeleton } from '../../components/ui';
 import { useAuthStore, useAccountStore, useTransactionStore } from '../../store';
 import { useAccountData } from '../../hooks';
 import { formatCurrency } from '../../utils';
-import type { Transaction } from '../../types';
+
 
 // Bank name mapping
 const BANK_NAMES: Record<string, string> = {
@@ -51,7 +49,6 @@ export const DashboardPage = () => {
     formattedBalance,
     isLoadingAccounts,
     isLoadingBalance,
-    isLoadingTransactions,
     refreshAll,
   } = useAccountData();
 
@@ -72,22 +69,6 @@ export const DashboardPage = () => {
       window.removeEventListener('refresh-dashboard', handleDashboardRefresh);
     };
   }, [handleDashboardRefresh]);
-
-  // Calculate stats from transactions using direction field
-  const stats = transactions.reduce(
-    (acc, txn) => {
-      if (txn.status !== 'SUCCESS') return acc;
-      
-      // Use direction field for accurate calculation
-      if (txn.direction === 'CREDIT') {
-        acc.income += txn.amount;
-      } else if (txn.direction === 'DEBIT') {
-        acc.spent += txn.amount;
-      }
-      return acc;
-    },
-    { income: 0, spent: 0 }
-  );
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -246,37 +227,6 @@ export const DashboardPage = () => {
         transition={{ delay: 0.4 }}
         className="grid grid-cols-2 gap-3"
       >
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-success-500)]/10 flex items-center justify-center">
-              <ArrowDownLeft className="w-5 h-5 text-[var(--color-success-500)]" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--text-muted)]">Income</p>
-              {isLoading ? (
-                <Skeleton className="h-6 w-20" />
-              ) : (
-                <p className="text-lg font-semibold text-[var(--text-primary)]">+{formatCurrency(stats.income)}</p>
-              )}
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[var(--color-error-500)]/10 flex items-center justify-center">
-              <ArrowUpRight className="w-5 h-5 text-[var(--color-error-500)]" />
-            </div>
-            <div>
-              <p className="text-xs text-[var(--text-muted)]">Spent</p>
-              {isLoading ? (
-                <Skeleton className="h-6 w-20" />
-              ) : (
-                <p className="text-lg font-semibold text-[var(--text-primary)]">-{formatCurrency(stats.spent)}</p>
-              )}
-            </div>
-          </div>
-        </Card>
       </motion.div>
 
       {/* Linked Banks */}

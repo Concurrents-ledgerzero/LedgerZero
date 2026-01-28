@@ -1,6 +1,7 @@
 package org.example.service;
 
 import org.example.dto.PaymentRequest;
+import org.example.dto.Response;
 import org.example.dto.SmsNotificationTask;
 import org.example.dto.TransactionResponse;
 import org.example.enums.TransactionStatus;
@@ -19,6 +20,8 @@ import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Transactional; // ✅ Spring Transactional
 
 import java.math.BigDecimal;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Core banking transaction service. Handles debit, credit, and reversal
@@ -212,6 +215,24 @@ public class TransactionService {
     }
 
     /**
+     * freeze the account
+     */
+    @Transactional(isolation = Isolation.SERIALIZABLE)
+    public Response freezeAccount(String accountNumber) {
+        String txnId = "FREEZE_ACCOUNT";
+        log.info("Processing FREEZE_ACCOUNT: txnId={}, account={}", txnId, maskAccountNumber(accountNumber));
+        BankAccount account = accountRepository.findByAccountNumber(accountNumber).orElse(null);
+
+        if(account == null){
+            return new Response("Account not found", 400, "Account not found", null);
+        }
+
+        account.setFrozenStatus(true);
+        accountRepository.save(account);
+        return new Response("Account frozen successfully", 200, "Account frozen successfully", null);
+    }
+
+    /**
      * Reverses a debit operation. ❌ WRITER: Critical Financial Op -> PRIMARY
      */
     @Transactional(isolation = Isolation.SERIALIZABLE)
@@ -332,6 +353,16 @@ public class TransactionService {
         data.put("hasMore", ledgerPage.hasNext());
 
         return new org.example.dto.Response("Transaction history retrieved", 200, null, data);
+    }
+
+    @Transactional(readOnly = true)
+    public org.example.dto.Response getTransactionHistory(String accountNumber) {
+
+
+        // This query goes to the Read Replica
+        List<AccountLedger> data = ledgerRepository.findByAccountNumberOrderByCreatedAtDesc(accountNumber);
+
+        return new org.example.dto.Response("Transaction history retrieved", 200, null, Map.of("transactions", data));
     }
 
     private boolean verifyMpin(BankAccount account, String providedMpinHash) {

@@ -345,6 +345,43 @@ public class BankClient {
         }
     }
 
+    public Response getTransactionHistory(String bankHandle, String accountNumber) {
+        String bankUrl = resolveBankUrl(bankHandle);
+        String url = bankUrl + "/api/bank/transactions-graph/" + accountNumber;
+
+        log.info("Getting transaction history from {} for account: ****{}",
+                bankHandle, accountNumber.substring(Math.max(0, accountNumber.length() - 4)));
+
+        try {
+            ResponseEntity<Response> response = restTemplate.getForEntity(url, Response.class);
+            return response.getBody();
+        } catch (Exception e) {
+            log.error("Failed to get transaction history from {}: {}", bankHandle, e.getMessage());
+            return new Response("Failed to get transaction history", 500, e.getMessage(), null);
+        }
+    }
+
+    /**
+     * set account is fronzen
+     */
+    public Response setAccountFrozen(String bankHandle, String accountNumber, boolean frozen) {
+        String bankUrl = resolveBankUrl(bankHandle);
+        String url = bankUrl + "/api/bank/set-frozen/" + accountNumber;
+
+        log.info("Setting account frozen status to {} for account: ****{}",frozen,accountNumber.substring(Math.max(0, accountNumber.length() - 4)));
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+
+        HttpEntity<String> entity = new HttpEntity<>(headers);
+
+        ResponseEntity<Response> response = restTemplate.exchange(url, HttpMethod.GET, entity, Response.class);
+
+        return response.getBody();
+
+    }
+
+
     /**
      * Health check for a specific bank.
      */

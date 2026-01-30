@@ -362,7 +362,7 @@ export const AuthPage = () => {
 
   const getTitle = () => {
     if (authMode === 'select') {
-      return { title: 'Welcome to LedgerZero', subtitle: 'Secure, fast UPI payments' };
+      return { title: 'Welcome to LedgerZero', subtitle: 'Secure, fast payments' };
     }
     
     switch (step) {
@@ -461,6 +461,17 @@ const ModeSelectStep = ({ onSelectLogin, onSelectRegister }: ModeSelectStepProps
         </motion.button>
       </div>
 
+      {/* Testing Note */}
+      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+        <p className="text-sm text-amber-400 font-medium mb-2">🧪 For Testing</p>
+        <p className="text-xs text-slate-400">
+          Please use <span className="text-amber-300 font-semibold">Login</span> option with pre-registered test accounts.(Click on login you will get the details)
+        </p>
+        <p className="text-xs text-slate-500 mt-2">
+          <span className="text-slate-400">Why?</span> Registration requires your phone number to be linked to a bank account in our partner bank's database. Test accounts are already set up.
+        </p>
+      </div>
+
       <p className="text-center text-xs text-slate-500 pt-4">
         By continuing, you agree to our{' '}
         <a href="#" className="text-primary-400 hover:underline">Terms of Service</a>
@@ -491,7 +502,7 @@ const PhoneStep = ({ phoneNumber, setPhoneNumber, error, isLoading, onSubmit, au
   };
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} className="space-y-6">
       <Input
         label="Mobile Number"
         type="tel"
@@ -503,24 +514,36 @@ const PhoneStep = ({ phoneNumber, setPhoneNumber, error, isLoading, onSubmit, au
         autoFocus
       />
 
+      {/* Testing Note */}
+      <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30">
+        <p className="text-xs text-amber-400 font-medium mb-2">🧪 Testing Mode</p>
+        <p className="text-xs text-slate-400">
+          Use <span className="text-amber-300 font-mono">7984858394</span> or <span className="text-amber-300 font-mono">9023240018</span> for testing.
+        </p>
+        <p className="text-xs text-slate-500 mt-1">
+          New accounts require pre-registered bank data. These test accounts are ready to use.
+        </p>
+      </div>
+
       <Button
+        type="submit"
         fullWidth
         size="lg"
         isLoading={isLoading}
-        onClick={handleSubmit}
         rightIcon={<ArrowRight size={20} />}
       >
         {authMode === 'login' ? 'Continue to Login' : 'Send OTP'}
       </Button>
 
       <button
+        type="button"
         onClick={onBack}
         className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-colors"
       >
         <ArrowLeft size={18} />
         <span>Back</span>
       </button>
-    </div>
+    </form>
   );
 };
 
@@ -548,7 +571,7 @@ const OtpStep = ({ phoneNumber, otp, setOtp, error, isLoading, onSubmit, onResen
   });
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); if (otp.length === 6) onSubmit(); }} className="space-y-6">
       {isDeviceVerification && (
         <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 mb-4">
           <p className="text-sm text-amber-400 text-center">
@@ -570,15 +593,22 @@ const OtpStep = ({ phoneNumber, otp, setOtp, error, isLoading, onSubmit, onResen
       />
 
       <Button
+        type="submit"
         fullWidth
         size="lg"
         isLoading={isLoading}
-        onClick={onSubmit}
         disabled={otp.length !== 6}
         rightIcon={<CheckCircle2 size={20} />}
       >
         {isDeviceVerification ? 'Verify Device' : 'Verify OTP'}
       </Button>
+
+      {/* Testing Note */}
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+        <p className="text-xs text-amber-400 text-center">
+          🧪 Use <span className="font-mono font-medium">123456</span> as OTP for testing
+        </p>
+      </div>
 
       <div className="text-center">
         {countdown > 0 ? (
@@ -587,6 +617,7 @@ const OtpStep = ({ phoneNumber, otp, setOtp, error, isLoading, onSubmit, onResen
           </p>
         ) : (
           <button
+            type="button"
             onClick={onResend}
             disabled={isLoading}
             className="text-sm text-primary-400 hover:underline disabled:opacity-50"
@@ -597,13 +628,14 @@ const OtpStep = ({ phoneNumber, otp, setOtp, error, isLoading, onSubmit, onResen
       </div>
 
       <button
+        type="button"
         onClick={onBack}
         className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-colors"
       >
         <ArrowLeft size={18} />
         <span>Change number</span>
       </button>
-    </div>
+    </form>
   );
 };
 
@@ -627,7 +659,7 @@ const RegisterStep = ({
   error, isLoading, onSubmit, onBack
 }: RegisterStepProps) => {
   return (
-    <div className="space-y-5">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-5">
       <Input
         label="Full Name"
         placeholder="Enter your full name"
@@ -658,23 +690,24 @@ const RegisterStep = ({
       />
 
       <Button
+        type="submit"
         fullWidth
         size="lg"
         isLoading={isLoading}
-        onClick={onSubmit}
         rightIcon={<ArrowRight size={20} />}
       >
         Create Account
       </Button>
 
       <button
+        type="button"
         onClick={onBack}
         className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-colors"
       >
         <ArrowLeft size={18} />
         <span>Back</span>
       </button>
-    </div>
+    </form>
   );
 };
 
@@ -690,7 +723,7 @@ interface LoginStepProps {
 
 const LoginStep = ({ phoneNumber, password, setPassword, error, isLoading, onSubmit, onBack }: LoginStepProps) => {
   return (
-    <div className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); onSubmit(); }} className="space-y-6">
       {/* Phone number display */}
       <div className="p-4 rounded-xl bg-slate-800/50 border border-slate-700 flex items-center gap-3">
         <div className="w-10 h-10 rounded-lg bg-primary-500/20 flex items-center justify-center">
@@ -713,30 +746,38 @@ const LoginStep = ({ phoneNumber, password, setPassword, error, isLoading, onSub
         autoFocus
       />
 
+      {/* Testing Note */}
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+        <p className="text-xs text-amber-400 text-center">
+          🧪 Use <span className="font-mono font-medium">123456</span> as password for testing
+        </p>
+      </div>
+
       <Button
+        type="submit"
         fullWidth
         size="lg"
         isLoading={isLoading}
-        onClick={onSubmit}
         rightIcon={<LogIn size={20} />}
       >
         Login
       </Button>
 
       <div className="text-center">
-        <button className="text-sm text-primary-400 hover:underline">
+        <button type="button" className="text-sm text-primary-400 hover:underline">
           Forgot Password?
         </button>
       </div>
 
       <button
+        type="button"
         onClick={onBack}
         className="w-full flex items-center justify-center gap-2 text-slate-400 hover:text-white transition-colors"
       >
         <ArrowLeft size={18} />
         <span>Change number</span>
       </button>
-    </div>
+    </form>
   );
 };
 

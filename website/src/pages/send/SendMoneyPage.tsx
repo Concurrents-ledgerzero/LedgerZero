@@ -21,6 +21,60 @@ import { formatCurrency, validateVpa, cn } from '../../utils';
 import type { TransactionResponse, TransactionStatus } from '../../types';
 
 // ============================================
+// ERROR MESSAGE MAPPING
+// ============================================
+
+interface ErrorDetails {
+  title: string;
+  description: string;
+  solution: string;
+}
+
+const getErrorDetails = (errorMessage: string): ErrorDetails => {
+  const errorMap: Record<string, ErrorDetails> = {
+    'Device not trusted': {
+      title: 'Device Not Recognized',
+      description: 'You recently logged in on another device, which automatically logged out this device for security reasons.',
+      solution: 'Please logout and login again on this device to re-register it.',
+    },
+    'Invalid MPIN': {
+      title: 'Incorrect MPIN',
+      description: 'The MPIN you entered is incorrect.',
+      solution: 'Please try again with the correct 6-digit MPIN.',
+    },
+    'Insufficient balance': {
+      title: 'Insufficient Balance',
+      description: 'Your account does not have enough balance for this transaction.',
+      solution: 'Please add funds to your account and try again.',
+    },
+    'Transaction blocked': {
+      title: 'Transaction Blocked',
+      description: 'This transaction was blocked by our fraud detection system.',
+      solution: 'If you believe this is a mistake, please contact support.',
+    },
+    'Session expired': {
+      title: 'Session Expired',
+      description: 'Your login session has expired.',
+      solution: 'Please logout and login again to continue.',
+    },
+  };
+
+  // Find matching error
+  for (const [key, details] of Object.entries(errorMap)) {
+    if (errorMessage.toLowerCase().includes(key.toLowerCase())) {
+      return details;
+    }
+  }
+
+  // Default error
+  return {
+    title: 'Payment Failed',
+    description: errorMessage || 'Something went wrong with your transaction.',
+    solution: 'Please try again or contact support if the issue persists.',
+  };
+};
+
+// ============================================
 // SEND MONEY PAGE
 // ============================================
 
@@ -103,7 +157,7 @@ export const SendMoneyPage = () => {
       }
       setStep('amount');
     } catch (error) {
-      setVpaError('Invalid UPI ID');
+      setVpaError('Invalid VPA');
     } finally {
       setIsLoading(false);
     }
@@ -435,14 +489,14 @@ const RecipientStep = ({ vpa, setVpa, error, isLoading, onSubmit }: RecipientSte
   ];
 
   return (
-    <div className="space-y-6">
+    <form onSubmit={(e) => { e.preventDefault(); if (vpa) onSubmit(); }} className="space-y-6">
       <div className="space-y-2 text-center">
         <h2 className="text-2xl font-bold text-white">Who are you paying?</h2>
         <p className="text-slate-400">Enter recipient's UPI ID</p>
       </div>
 
       <Input
-        label="UPI ID"
+        label="VPA"
         placeholder="name@upi"
         value={vpa}
         onChange={(e: React.ChangeEvent<HTMLInputElement>) => setVpa(e.target.value.toLowerCase())}
@@ -452,10 +506,10 @@ const RecipientStep = ({ vpa, setVpa, error, isLoading, onSubmit }: RecipientSte
       />
 
       <Button
+        type="submit"
         fullWidth
         size="lg"
         isLoading={isLoading}
-        onClick={onSubmit}
         disabled={!vpa}
         rightIcon={<ArrowRight size={20} />}
       >
@@ -483,7 +537,7 @@ const RecipientStep = ({ vpa, setVpa, error, isLoading, onSubmit }: RecipientSte
           ))}
         </div>
       </div>
-    </div>
+    </form>
   );
 };
 
@@ -505,15 +559,22 @@ const AmountStep = ({ amount, setAmount, note, setNote, quickAmounts, error, rec
     inputRef.current?.focus();
   }, []);
 
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (amount && parseFloat(amount) > 0) {
+      onSubmit();
+    }
+  };
+
   return (
-    <div className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-6">
       {/* Recipient Info */}
       <div className="text-center space-y-1">
         <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-2xl font-bold mx-auto mb-3">
           {recipientName.charAt(0).toUpperCase()}
         </div>
         <h2 className="text-xl font-bold text-white">{recipientName}</h2>
-        <p className="text-sm text-slate-500">UPI Payment</p>
+        <p className="text-sm text-slate-500">Payment</p>
       </div>
 
       {/* Amount Input */}
@@ -538,6 +599,7 @@ const AmountStep = ({ amount, setAmount, note, setNote, quickAmounts, error, rec
       <div className="flex flex-wrap justify-center gap-2">
         {quickAmounts.map((qa) => (
           <button
+            type="button"
             key={qa}
             onClick={() => setAmount(String(qa))}
             className={cn(
@@ -561,15 +623,15 @@ const AmountStep = ({ amount, setAmount, note, setNote, quickAmounts, error, rec
       />
 
       <Button
+        type="submit"
         fullWidth
         size="lg"
-        onClick={onSubmit}
         disabled={!amount || parseFloat(amount) <= 0}
         rightIcon={<ArrowRight size={20} />}
       >
         Continue
       </Button>
-    </div>
+    </form>
   );
 };
 
@@ -671,8 +733,8 @@ const MpinStep = ({ mpin, setMpin, error, onSubmit }: MpinStepProps) => {
         <div className="w-16 h-16 rounded-full bg-primary-500/20 flex items-center justify-center mx-auto mb-4">
           <Shield className="w-8 h-8 text-primary-400" />
         </div>
-        <h2 className="text-2xl font-bold text-white">Enter UPI PIN</h2>
-        <p className="text-slate-400">Enter your 6-digit UPI PIN to authorize</p>
+        <h2 className="text-2xl font-bold text-white">Enter PIN</h2>
+        <p className="text-slate-400">Enter your 6-digit PIN to authorize</p>
       </div>
 
       <MpinInput
@@ -682,8 +744,15 @@ const MpinStep = ({ mpin, setMpin, error, onSubmit }: MpinStepProps) => {
         error={error}
       />
 
+      {/* Testing Note */}
+      <div className="p-3 rounded-xl bg-amber-500/10 border border-amber-500/30">
+        <p className="text-xs text-amber-400 text-center">
+          🧪 Use <span className="font-mono font-medium">123456</span> as MPIN for testing
+        </p>
+      </div>
+
       <p className="text-center text-xs text-slate-500">
-        Never share your UPI PIN with anyone
+        Never share your MPIN with anyone
       </p>
     </div>
   );
@@ -748,7 +817,7 @@ const ResultStep = ({ result, recipientName, forensicReport, isLoadingForensic, 
           transition={{ delay: 0.3 }}
           className="text-3xl font-bold text-white"
         >
-          {isSuccess ? 'Payment Successful!' : 'Payment Failed'}
+          {isSuccess ? 'Payment Successful!' : getErrorDetails(result.message || '').title}
         </motion.h1>
         <motion.p
           initial={{ opacity: 0 }}
@@ -758,9 +827,31 @@ const ResultStep = ({ result, recipientName, forensicReport, isLoadingForensic, 
         >
           {isSuccess
             ? `${formatCurrency(result.amount ?? 0)} sent to ${recipientName}`
-            : result.message || 'Something went wrong'}
+            : getErrorDetails(result.message || '').description}
         </motion.p>
       </div>
+
+      {/* Error Details Card - Only show for failures */}
+      {!isSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="w-full max-w-md"
+        >
+          <Card className="p-4 space-y-3 border border-amber-500/30 bg-amber-500/5">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-amber-400 mt-0.5 flex-shrink-0" />
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-amber-400">What to do next?</p>
+                <p className="text-sm text-slate-300">
+                  {getErrorDetails(result.message || '').solution}
+                </p>
+              </div>
+            </div>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Transaction Details */}
       {isSuccess && result.transactionId && (
@@ -783,14 +874,14 @@ const ResultStep = ({ result, recipientName, forensicReport, isLoadingForensic, 
                 </span>
               </div>
             )}
-            {result.riskScore !== undefined && (
+            {/* {result.riskScore !== undefined && (
               <div className="flex justify-between text-sm">
                 <span className="text-slate-400">Risk Score</span>
                 <span className={`font-medium ${result.riskScore > 0.5 ? 'text-amber-400' : 'text-emerald-400'}`}>
                   {(result.riskScore * 100).toFixed(1)}%
                 </span>
               </div>
-            )}
+            )} */}
           </Card>
         </motion.div>
       )}
